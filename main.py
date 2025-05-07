@@ -123,5 +123,21 @@ async def たたかい(ctx):
     view = BattleView(user_id)
     await ctx.send(embed=embed, view=view)
 
+
+@bot.command()
+async def help(ctx):
+    # コマンドページごとの内容
+    pages = [
+        "**ページ 1**\n`/hello` - 挨拶コマンド\n`/おはよう` - おはようコマンド",
+        "**ページ 2**\n`/たたかい` - 戦闘開始\n(次に進むと追加の説明があります)"
+    ]
+
+    # ヘルプビューを作成
+    view = HelpView(pages, ctx.author.id)
+    embed = discord.Embed(title="コマンド一覧", description=pages[0])
+
+    await ctx.send(embed=embed, view=view)
+
+
 # 実行
 bot.run(os.environ['DISCORD_TOKEN'])
