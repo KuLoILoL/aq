@@ -116,7 +116,7 @@ class BattleView(discord.ui.View):
         embed.add_field(name="敵のHP", value=f"{state['enemy_hp']}", inline=True)
 
         # 敵画像を追加
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1303151128178982973/1369549449927327805/1696009395055.png?ex=681c43d1&is=681af251&hm=855076894a828f92336890ae6b1d25972e60cf8d58ddfcba9058d41f762e6273&format=webp&quality=lossless&width=610&height=709")  # ここで画像URLを指定
+        embed.set_image(url="https://example.com/enemy_image.png")  # ここで画像URLを指定
 
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -155,7 +155,7 @@ async def たたかい(ctx):
     embed.add_field(name="あなたのHP", value=f"{player_hp} / {player_hp}", inline=True)
     embed.add_field(name="敵のHP", value=str(enemy_hp), inline=True)
 
-    # プレイヤーの画像を表示
+    # プレイヤーの画像を表示（画像URLを省略可）
     embed.set_image(url="https://example.com/player_image.png")  # プレイヤー画像のURLを指定
 
     view = BattleView(user_id)
