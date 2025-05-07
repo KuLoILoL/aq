@@ -30,7 +30,6 @@ async def button_command(ctx):
 # 🔹 コマンド名 → 関数 の辞書（ループで登録）
 command_map = {
     "hello": hello_command,
-    "ping": ping_command,
     "おはよう": button_command
 }
 
