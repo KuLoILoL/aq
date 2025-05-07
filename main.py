@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import os
+import random
 
 # Discordのインテント設定（Botがイベントを受け取るための許可）
 intents = discord.Intents.default()
