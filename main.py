@@ -125,7 +125,7 @@ async def たたかい(ctx):
 
 
 @bot.command()
-async def help(ctx):
+async def たすけて(ctx):
     # コマンドページごとの内容
     pages = [
         "**ページ 1**\n`/hello` - 挨拶コマンド\n`/おはよう` - おはようコマンド",
