@@ -61,147 +61,156 @@ def load_data():
             player_data = json.load(f)
 
 # ここから戦闘ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+
+intents = discord.Intents.default()
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+DATA_FILE = "player_data.json"
+player_data = {}
+battle_state = {}  # 一時的な戦闘状態（HPなど）
+
+# ------------------------ JSON 読み書き ------------------------
+
+def load_data():
+    global player_data
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            player_data = json.load(f)
+    else:
+        player_data = {}
+
 def save_data():
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(player_data, f, ensure_ascii=False, indent=2)
 
-load_data()
+# ------------------------ レベルアップ処理 ------------------------
 
-class Character:
-    def __init__(self, name, level=1, exp=0, max_hp=100, strength=10, agility=8):
-        self.name = name
-        self.level = level
-        self.exp = exp
-        self.max_hp = max_hp
-        self.hp = max_hp
-        self.strength = strength
-        self.agility = agility
+def check_level_up(user_id):
+    data = player_data[user_id]
+    level = data["level"]
+    exp = data["exp"]
+    next_exp = level * 50
 
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "level": self.level,
-            "exp": self.exp,
-            "max_hp": self.max_hp,
-            "strength": self.strength,
-            "agility": self.agility
-        }
+    if exp >= next_exp:
+        data["level"] += 1
+        data["exp"] -= next_exp
+        data["max_hp"] += 20
+        data["strength"] += 5
+        data["agility"] += 3
+        return True
+    return False
 
-    def gain_exp(self, amount):
-        self.exp += amount
-        level_up = False
-        while self.exp >= self.next_level_exp():
-            self.exp -= self.next_level_exp()
-            self.level += 1
-            self.max_hp += 20
-            self.strength += 3
-            self.agility += 2
-            level_up = True
-        return level_up
-
-    def next_level_exp(self):
-        return 50 + self.level * 20
-
-    @property
-    def attack(self):
-        return self.strength + 5
-
-    @property
-    def defense(self):
-        return int(self.agility / 2) + 3
-
-    def is_alive(self):
-        return self.hp > 0
-
-    def attack_target(self, target):
-        damage = max(1, self.attack - target.defense)
-        target.hp -= damage
-        return damage
+# ------------------------ 戦闘View（ボタン） ------------------------
 
 class BattleView(discord.ui.View):
     def __init__(self, user_id):
         super().__init__(timeout=None)
-        self.user_id = user_id
+        self.user_id = str(user_id)
 
     @discord.ui.button(label="攻撃", style=discord.ButtonStyle.danger)
     async def attack(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message("これはあなたの戦闘ではありません。", ephemeral=True)
+        if str(interaction.user.id) != self.user_id:
+            await interaction.response.send_message("これはあなたの戦闘ではありません！", ephemeral=True)
             return
 
-        data = player_data.get(str(self.user_id))
-        if not data:
-            await interaction.response.send_message("戦闘データが見つかりません。", ephemeral=True)
-            return
+        data = player_data[self.user_id]
+        state = battle_state[self.user_id]
 
-        player = data["player"]
-        enemy = data["enemy"]
+        # プレイヤーと敵の攻撃力
+        player_atk = data["strength"]
+        enemy_level = data["level"]
+        enemy_hp = 30 + enemy_level * 10
+        enemy_atk = 5 + enemy_level * 3
 
-        dmg_to_enemy = player.attack_target(enemy)
-        dmg_to_player = enemy.attack_target(player)
+        damage_to_enemy = random.randint(player_atk - 3, player_atk + 3)
+        damage_to_player = random.randint(enemy_atk - 2, enemy_atk + 2)
 
-        if not enemy.is_alive():
-            gained_exp = 30 + enemy.level * 10
-            level_up = player.gain_exp(gained_exp)
-            player.hp = player.max_hp
+        state["enemy_hp"] -= damage_to_enemy
+        state["player_hp"] -= damage_to_player
+
+        if state["enemy_hp"] <= 0:
+            data["exp"] += 20 + enemy_level * 5
+            leveled_up = check_level_up(self.user_id)
             save_data()
-            del player_data[str(self.user_id)]
-            result = f"🎉 勝利！EXPを {gained_exp} 獲得！"
-            if level_up:
-                result += f"\n⬆️ {player.name} は レベル {player.level} に上がった！"
+            msg = f"🎉 勝利！{damage_to_enemy}ダメージを与えた！\n経験値 +{20 + enemy_level * 5}"
+            if leveled_up:
+                msg += f"\n🆙 {data['level']} レベルにアップ！"
 
-            await interaction.response.edit_message(content=result, embed=None, view=None)
+            await interaction.response.edit_message(content=msg, embed=None, view=None)
+            battle_state.pop(self.user_id)
             return
 
-        if not player.is_alive():
-            del player_data[str(self.user_id)]
-            await interaction.response.edit_message(content="💀 やられてしまった…", embed=None, view=None)
+        if state["player_hp"] <= 0:
+            await interaction.response.edit_message(content="💀 あなたはやられてしまった…", embed=None, view=None)
+            battle_state.pop(self.user_id)
             return
 
         embed = discord.Embed(title="⚔️ 戦闘中", color=discord.Color.red())
-        embed.add_field(name="あなたのHP", value=f"{player.hp} / {player.max_hp}")
-        embed.add_field(name="敵のHP", value=f"{enemy.hp} / {enemy.max_hp}")
+        embed.add_field(name="あなたのHP", value=f"{state['player_hp']} / {data['max_hp']}", inline=True)
+        embed.add_field(name="敵のHP", value=f"{state['enemy_hp']}", inline=True)
         await interaction.response.edit_message(embed=embed, view=self)
+
+# ------------------------ コマンド：戦闘開始 ------------------------
 
 @bot.command()
 async def たたかい(ctx):
     user_id = str(ctx.author.id)
 
-    if user_id in player_data:
+    if user_id not in player_data:
+        player_data[user_id] = {
+            "name": ctx.author.display_name,
+            "level": 1,
+            "exp": 0,
+            "max_hp": 100,
+            "strength": 10,
+            "agility": 8
+        }
+        save_data()
+
+    if user_id in battle_state:
         await ctx.send("すでに戦闘中です！")
         return
 
-    # プレイヤーデータの読み込み or 新規作成
-    saved = load_data()
-    if user_id in saved:
-        p = saved[user_id]
-        player = Character(p["name"], p["level"], p["exp"], p["max_hp"], p["strength"], p["agility"])
-    else:
-        player = Character(ctx.author.display_name)
+    # 戦闘用のHP状態を初期化
+    player_hp = player_data[user_id]["max_hp"]
+    enemy_level = player_data[user_id]["level"]
+    enemy_hp = 30 + enemy_level * 10
 
-    # 敵のレベルはプレイヤーのレベル ±1（最低1）
-    enemy_level = max(1, random.randint(player.level - 1, player.level + 1))
-    enemy = Character("スライム", level=enemy_level, max_hp=80 + 15 * enemy_level,
-                      strength=8 + 2 * enemy_level, agility=6 + 2 * enemy_level)
-
-    player.hp = player.max_hp
-    enemy.hp = enemy.max_hp
-
-    player_data[user_id] = {
-        "player": player,
-        "enemy": enemy
+    battle_state[user_id] = {
+        "player_hp": player_hp,
+        "enemy_hp": enemy_hp
     }
 
-    embed = discord.Embed(title="⚔️ 戦闘開始！", description="攻撃ボタンを押してバトル！", color=discord.Color.red())
-    embed.add_field(name="あなたのHP", value=f"{player.hp} / {player.max_hp}")
-    embed.add_field(name="敵のHP", value=f"{enemy.hp} / {enemy.max_hp}")
-    view = BattleView(user_id=int(user_id))
+    embed = discord.Embed(title="⚔️ 戦闘開始！", description="攻撃ボタンで戦おう！", color=discord.Color.red())
+    embed.add_field(name="あなたのHP", value=f"{player_hp} / {player_hp}", inline=True)
+    embed.add_field(name="敵のHP", value=str(enemy_hp), inline=True)
+
+    view = BattleView(user_id)
     await ctx.send(embed=embed, view=view)
 
-    # 永続保存
-    saved[user_id] = player.to_dict()
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(saved, f, ensure_ascii=False, indent=2)
+# ------------------------ コマンド：ステータス表示 ------------------------
+
+@bot.command()
+async def ステータス(ctx):
+    user_id = str(ctx.author.id)
+    if user_id not in player_data:
+        await ctx.send("まだプレイヤーデータがありません。まずは `!たたかい` で戦ってみましょう！")
+        return
+
+    data = player_data[user_id]
+    embed = discord.Embed(title=f"🧍 {data['name']} のステータス", color=discord.Color.blue())
+    embed.add_field(name="レベル", value=data["level"], inline=True)
+    embed.add_field(name="経験値", value=f"{data['exp']} / {data['level'] * 50}", inline=True)
+    embed.add_field(name="最大HP", value=data["max_hp"], inline=True)
+    embed.add_field(name="ちから", value=data["strength"], inline=True)
+    embed.add_field(name="すばやさ", value=data["agility"], inline=True)
+    await ctx.send(embed=embed)
+
+# ------------------------ Bot 起動準備 ------------------------
+
+
+
 
 # 実行
 bot.run(os.environ['DISCORD_TOKEN'])
