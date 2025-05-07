@@ -9,65 +9,10 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-@bot.event
-async def on_ready():
-    print(f'✅ Bot is ready: {bot.user}')
-
-# 🔹 ボタン付きの処理用ビュー
-class MyButtonView(discord.ui.View):
-    @discord.ui.button(label="挨拶", style=discord.ButtonStyle.primary)
-    async def button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("# ドカーン💥", ephemeral=True)
-
-# 🔹 コマンド関数
-async def hello_command(ctx):
-    await ctx.send("ハロー")
-
-async def button_command(ctx):
-    view = MyButtonView()
-    await ctx.send("おはようございます！", view=view)
-
-# 🔹 コマンドマップ
-command_map = {
-    "hello": hello_command,
-    "おはよう": button_command
-}
-
-for name, handler in command_map.items():
-    bot.command(name=name)(handler)
-
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-
-    if "大丈夫？" in message.content:
-        rand = random.random()
-        if rand < 0.9:
-            response = "俺なら大丈夫だぜ"
-        else:
-            response = "大丈夫なわけねえだろ"
-        await message.channel.send(response)
-
-    await bot.process_commands(message)
-
+# プレイヤーデータ保存用ファイル
 DATA_FILE = "player_data.json"
 player_data = {}
-
-def load_data():
-    global player_data
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            player_data = json.load(f)
-
-# ここから戦闘ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-
-
-DATA_FILE = "player_data.json"
-player_data = {}
-battle_state = {}  # 一時的な戦闘状態（HPなど）
-
-# ------------------------ JSON 読み書き ------------------------
+battle_state = {}
 
 def load_data():
     global player_data
@@ -81,8 +26,47 @@ def save_data():
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(player_data, f, ensure_ascii=False, indent=2)
 
-# ------------------------ レベルアップ処理 ------------------------
+@bot.event
+async def on_ready():
+    load_data()
+    print(f'✅ Bot is ready: {bot.user}')
 
+# 🔹 ボタン付きビュー
+class MyButtonView(discord.ui.View):
+    @discord.ui.button(label="挨拶", style=discord.ButtonStyle.primary)
+    async def button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("# ドカーン💥", ephemeral=True)
+
+# 🔹 カスタムコマンド関数
+async def hello_command(ctx):
+    await ctx.send("ハロー")
+
+async def button_command(ctx):
+    view = MyButtonView()
+    await ctx.send("おはようございます！", view=view)
+
+command_map = {
+    "hello": hello_command,
+    "おはよう": button_command
+}
+
+for name, handler in command_map.items():
+    bot.command(name=name)(handler)
+
+# 🔹 メッセージ反応
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    if "大丈夫？" in message.content:
+        rand = random.random()
+        response = "俺なら大丈夫だぜ" if rand < 0.9 else "大丈夫なわけねえだろ"
+        await message.channel.send(response)
+
+    await bot.process_commands(message)
+
+# 🔹 レベルアップ処理
 def check_level_up(user_id):
     data = player_data[user_id]
     level = data["level"]
@@ -98,8 +82,7 @@ def check_level_up(user_id):
         return True
     return False
 
-# ------------------------ 戦闘View（ボタン） ------------------------
-
+# 🔹 戦闘ビュー
 class BattleView(discord.ui.View):
     def __init__(self, user_id):
         super().__init__(timeout=None)
@@ -114,7 +97,6 @@ class BattleView(discord.ui.View):
         data = player_data[self.user_id]
         state = battle_state[self.user_id]
 
-        # プレイヤーと敵の攻撃力
         player_atk = data["strength"]
         enemy_level = data["level"]
         enemy_hp = 30 + enemy_level * 10
@@ -133,7 +115,6 @@ class BattleView(discord.ui.View):
             msg = f"🎉 勝利！{damage_to_enemy}ダメージを与えた！\n経験値 +{20 + enemy_level * 5}"
             if leveled_up:
                 msg += f"\n🆙 {data['level']} レベルにアップ！"
-
             await interaction.response.edit_message(content=msg, embed=None, view=None)
             battle_state.pop(self.user_id)
             return
@@ -148,8 +129,7 @@ class BattleView(discord.ui.View):
         embed.add_field(name="敵のHP", value=f"{state['enemy_hp']}", inline=True)
         await interaction.response.edit_message(embed=embed, view=self)
 
-# ------------------------ コマンド：戦闘開始 ------------------------
-
+# 🔹 コマンド：戦闘開始
 @bot.command()
 async def たたかい(ctx):
     user_id = str(ctx.author.id)
@@ -169,7 +149,6 @@ async def たたかい(ctx):
         await ctx.send("すでに戦闘中です！")
         return
 
-    # 戦闘用のHP状態を初期化
     player_hp = player_data[user_id]["max_hp"]
     enemy_level = player_data[user_id]["level"]
     enemy_hp = 30 + enemy_level * 10
@@ -186,13 +165,12 @@ async def たたかい(ctx):
     view = BattleView(user_id)
     await ctx.send(embed=embed, view=view)
 
-# ------------------------ コマンド：ステータス表示 ------------------------
-
+# 🔹 コマンド：ステータス確認
 @bot.command()
 async def ステータス(ctx):
     user_id = str(ctx.author.id)
     if user_id not in player_data:
-        await ctx.send("まだプレイヤーデータがありません。まずは `!たたかい` で戦ってみましょう！")
+        await ctx.send("まだプレイヤーデータがありません。まずは `/たたかい` で戦ってみましょう！")
         return
 
     data = player_data[user_id]
@@ -204,10 +182,5 @@ async def ステータス(ctx):
     embed.add_field(name="すばやさ", value=data["agility"], inline=True)
     await ctx.send(embed=embed)
 
-# ------------------------ Bot 起動準備 ------------------------
-
-
-
-
-# 実行
+# 🔹 実行
 bot.run(os.environ['DISCORD_TOKEN'])
