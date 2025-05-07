@@ -53,7 +53,9 @@ async def on_message(message):
             response = "俺なら大丈夫だぜ 💪"  # 90%
         else:
             response = "大丈夫なわけねえだろ 😡"  # 10%
+            
         await message.channel.send(response)
+        
     await bot.process_commands(message)
 
 
