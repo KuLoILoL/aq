@@ -51,9 +51,9 @@ async def on_message(message):
         rand = random.random()  # 0.0 〜 1.0 の浮動小数点数を返す
 
         if rand < 0.9:
-            response = "俺なら大丈夫だぜ 💪"  # 90%
+            response = "俺なら大丈夫だぜ"  # 90%
         else:
-            response = "大丈夫なわけねえだろ 😡"  # 10%
+            response = "大丈夫なわけねえだろ"  # 10%
             
         await message.channel.send(response)
         
