@@ -13,44 +13,6 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 async def on_ready():
     print(f'✅ Bot is ready: {bot.user}')
 
-# 🔹 ボタン付きの処理用ビュー
-class MyButtonView(discord.ui.View):
-    @discord.ui.button(label="挨拶", style=discord.ButtonStyle.primary)
-    async def button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("# ドカーン💥", ephemeral=True)
-
-# 🔹 コマンド関数
-async def hello_command(ctx):
-    await ctx.send("ハロー")
-
-async def button_command(ctx):
-    view = MyButtonView()
-    await ctx.send("おはようございます！", view=view)
-
-# 🔹 コマンドマップ
-command_map = {
-    "hello": hello_command,
-    "おはよう": button_command
-}
-
-for name, handler in command_map.items():
-    bot.command(name=name)(handler)
-
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-
-    if "大丈夫？" in message.content:
-        rand = random.random()
-        if rand < 0.9:
-            response = "俺なら大丈夫だぜ"
-        else:
-            response = "大丈夫なわけねえだろ"
-        await message.channel.send(response)
-
-    await bot.process_commands(message)
-
 # ------------------------ JSON 読み書き ------------------------
 
 DATA_FILE = "player_data.json"
@@ -116,7 +78,7 @@ class BattleView(discord.ui.View):
         embed.add_field(name="敵のHP", value=f"{state['enemy_hp']}", inline=True)
 
         # 敵画像を追加
-        embed.set_image(url="https://example.com/enemy_image.png")  # ここで画像URLを指定
+        embed.set_image(url="https://cdn.discordapp.com/attachments/1303151128178982973/1369549449927327805/1696009395055.png?ex=681c43d1&is=681af251&hm=855076894a828f92336890ae6b1d25972e60cf8d58ddfcba9058d41f762e6273&format=webp&quality=lossless&width=610&height=709")  # ここで画像URLを指定
 
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -156,7 +118,7 @@ async def たたかい(ctx):
     embed.add_field(name="敵のHP", value=str(enemy_hp), inline=True)
 
     # プレイヤーの画像を表示（画像URLを省略可）
-    embed.set_image(url="https://example.com/player_image.png")  # プレイヤー画像のURLを指定
+    embed.set_image(url="https://media.discordapp.net/attachments/1287487959267938429/1369569275253227522/8_20241031092218.png?ex=681c5648&is=681b04c8&hm=f7c67a39a858fdb959518d032921b4367e0ff55ccf15ab6cd917bdde0c2e3478&=&format=webp&quality=lossless&width=610&height=610")  # プレイヤー画像のURLを指定
 
     view = BattleView(user_id)
     await ctx.send(embed=embed, view=view)
