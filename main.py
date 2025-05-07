@@ -63,9 +63,6 @@ def load_data():
 # ここから戦闘ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
 
-intents = discord.Intents.default()
-bot = commands.Bot(command_prefix="!", intents=intents)
-
 DATA_FILE = "player_data.json"
 player_data = {}
 battle_state = {}  # 一時的な戦闘状態（HPなど）
