@@ -40,9 +40,9 @@ async def on_message(message):
     if "大丈夫？" in message.content:
         rand = random.random()
         if rand < 0.9:
-            response = "俺なら大丈夫だぜ 💪"
+            response = "俺なら大丈夫だぜ"
         else:
-            response = "大丈夫なわけねえだろ 😡"
+            response = "大丈夫なわけねえだろ"
         await message.channel.send(response)
 
     await bot.process_commands(message)
