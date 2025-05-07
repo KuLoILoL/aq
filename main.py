@@ -132,7 +132,7 @@ async def たたかい(ctx):
     embed = discord.Embed(title="⚔️ 戦闘開始！", description="攻撃ボタンで戦おう！", color=discord.Color.red())
     embed.add_field(name="あなたのHP", value="100 / 100")
     embed.add_field(name="敵のHP", value="50 / 50")
-    embed.set_image(url="attachment://enemy.png")  # 同じファイル名で添付
+    embed.set_image(url=""https://cdn.discordapp.com/attachments/1303151128178982973/1369549449927327805/1696009395055.png?ex=681c43d1&is=681af251&hm=855076894a828f92336890ae6b1d25972e60cf8d58ddfcba9058d41f762e6273&format=webp&quality=lossless&width=610&height=709"")  # 同じファイル名で添付
 
     view = BattleView(user_id)
     file = discord.File("enemy.png", filename="enemy.png")
