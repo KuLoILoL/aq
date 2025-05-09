@@ -12,20 +12,10 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 async def on_ready():
     print(f'✅ Bot is ready: {bot.user}')
 
-class MyButtonView(discord.ui.View):
-    @discord.ui.button(label="挨拶", style=discord.ButtonStyle.primary)
-    async def button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("# ドカーン💥", ephemeral=True)
-
-async def hello_command(ctx):
-    await ctx.send("ハロー")
-
-async def button_command(ctx):
-    view = MyButtonView()
-    await ctx.send("おはようございます！", view=view)
-
-async def oyasumikuji_command(ctx):
-    messages = [
+class NightView(discord.ui.View):
+    @discord.ui.button(label="おやすみくじ", style=discord.ButtonStyle.success)
+ async def lucky_color(self, interaction: discord.Interaction, button: discord.ui.Button):
+        colors = [
         "明日は何もいいことありません",
         "明日はいいことあります",
         "明日のラッキーカラーは赤です",
@@ -35,7 +25,14 @@ async def oyasumikuji_command(ctx):
         "明日は大吉です。",
         "明日は大凶です。"
     ]
-    await ctx.send(random.choice(messages))
+        await interaction.response.send_message(f"{random.choice(colors)}", ephemeral=True)
+
+async def hello_command(ctx):
+    await ctx.send("ハロー")
+
+async def button_command(ctx):
+    view = MyButtonView()
+    await ctx.send("おはようございます！", view=view)
 
 async def oyasumi_command(ctx):
     await ctx.send("おやすみなさい。ぐ～", view=view)
