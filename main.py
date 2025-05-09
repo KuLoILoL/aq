@@ -19,9 +19,22 @@ class MyButtonView(discord.ui.View):
         await interaction.response.send_message("🌞 おはようございます！", ephemeral=True)
 
 # 🌙 夜用ビュー（おやすみくじボタン）
+user_button_click_count = {}
+
 class NightView(discord.ui.View):
     @discord.ui.button(label="おやすみくじ", style=discord.ButtonStyle.success)
     async def lucky_color(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = interaction.user.id
+
+         # ユーザーの押下回数を管理
+        if user_id not in user_button_click_count:
+            user_button_click_count[user_id] = 0
+
+        # 2回までボタンを押せるように制限
+        if user_button_click_count[user_id] >= 2:
+            await interaction.response.send_message(f"{interaction.user.mention} もう押さないでください。", ephemeral=True)
+            return
+
         colors = [
             "明日は何もいいことありません",
             "明日はいいことあります",
@@ -32,7 +45,8 @@ class NightView(discord.ui.View):
             "明日は大吉です。",
             "明日は大凶です。"
         ]
-        await interaction.response.send_message(random.choice(colors))
+        await interaction.response.send_message(f"{interaction.user.mention} {random.choice(colors)}")
+        user_button_click_count[user_id] += 1
 
 # 💬 各コマンドの処理
 async def hello_command(ctx):
