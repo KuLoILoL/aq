@@ -16,7 +16,7 @@ async def on_ready():
 class MyButtonView(discord.ui.View):
     @discord.ui.button(label="挨拶", style=discord.ButtonStyle.primary)
     async def button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("🌞 おはようございます！", ephemeral=True)
+        await interaction.response.send_message("# ドカーン💥", ephemeral=True)
 
 # 🌙 夜用ビュー（おやすみくじボタン）
 user_button_click_count = {}
