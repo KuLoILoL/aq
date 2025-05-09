@@ -31,8 +31,8 @@ class NightView(discord.ui.View):
             user_button_click_count[user_id] = 0
 
         # 2回までボタンを押せるように制限
-        if user_button_click_count[user_id] >= 2:
-            await interaction.response.send_message(f"{interaction.user.mention} もう押さないでください。", ephemeral=True)
+        if user_button_click_count[user_id] >= 3:
+            await interaction.response.send_message(f"{interaction.user.mention} はよ寝ろ", ephemeral=True)
             return
 
         colors = [
