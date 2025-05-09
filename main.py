@@ -114,45 +114,55 @@ async def ざつよう(ctx):
     save_data()
     await ctx.send(f"サンキュ！あと{bot_data['value']}本残ってるぞ！")
 
-# プレイヤーステータス保存ファイル
-PLAYER_PATH = "/app/data/players.json"
+PLAYER_DATA_PATH = "/app/data/player_data.json"
 
-# 初期データ読み込み
-if os.path.exists(PLAYER_PATH):
-    with open(PLAYER_PATH, "r") as f:
-        players = json.load(f)
+# プレイヤーデータの読み込み
+if os.path.exists(PLAYER_DATA_PATH):
+    with open(PLAYER_DATA_PATH, "r") as f:
+        player_data = json.load(f)
 else:
-    players = {}
+    player_data = {}
 
-# ステータス保存
-def save_players():
-    with open(PLAYER_PATH, "w") as f:
-        json.dump(players, f)
+# 保存関数
+def save_player_data():
+    with open(PLAYER_DATA_PATH, "w") as f:
+        json.dump(player_data, f)
 
-# 戦闘ビュー
-class BattleView(discord.ui.View):
-    def __init__(self, user_id):
-        super().__init__(timeout=None)
-        self.user_id = str(user_id)
+@bot.command()
+async def たたかう(ctx):
+    user_id = str(ctx.author.id)
 
-    @discord.ui.button(label="こうげき", style=discord.ButtonStyle.danger)
-    async def attack(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user_id = str(interaction.user.id)
+    # プレイヤーデータの初期化
+    if user_id not in player_data:
+        player_data[user_id] = {"hp": 30}
 
-        if user_id != self.user_id:
-            await interaction.response.send_message("自分の戦闘じゃないよ！", ephemeral=True)
-            return
+    player_hp = player_data[user_id]["hp"]
+    slime_hp = 20
 
-        player = players.get(user_id)
-        if not player:
-            await interaction.response.send_message("戦闘データが見つかりません", ephemeral=True)
-            return
+    log = [f"👤 あなたのHP: {player_hp}", f"👾 スライムのHP: {slime_hp}"]
 
-        # 戦闘処理
-        dmg_to_enemy = random.randint(5, 15)
-        dmg_to_player = random.randint(3, 10)
+    # 戦闘ループ（1回の攻撃で終わらせる簡易版）
+    player_attack = random.randint(3, 10)
+    slime_hp -= player_attack
+    log.append(f"👊 あなたの攻撃！ スライムに {player_attack} ダメージ！")
 
-        player["enemy_hp"]
+    if slime_hp <= 0:
+        log.append("🎉 スライムをたおした！")
+        await ctx.send("\n".join(log))
+        return
+
+    slime_attack = random.randint(2, 6)
+    player_hp -= slime_attack
+    player_data[user_id]["hp"] = player_hp
+    save_player_data()
+
+    log.append(f"💥 スライムの反撃！ あなたに {slime_attack} ダメージ！")
+    if player_hp <= 0:
+        log.append("💀 あなたはたおれてしまった… HPが30に回復します。")
+        player_data[user_id]["hp"] = 30
+        save_player_data()
+
+    await ctx.send("\n".join(log))
 
 
 # 🔁 実行
