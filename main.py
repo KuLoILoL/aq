@@ -38,7 +38,6 @@ async def oyasumikuji_command(ctx):
     await ctx.send(random.choice(messages))
 
 async def oyasumi_command(ctx):
-    view = MyButtonView()
     await ctx.send("おやすみなさい。ぐ～", view=view)
 
 
