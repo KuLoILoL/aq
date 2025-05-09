@@ -32,7 +32,7 @@ class NightView(discord.ui.View):
             "明日は大吉です。",
             "明日は大凶です。"
         ]
-        await interaction.response.send_message(random.choice(colors), ephemeral=True)
+        await interaction.response.send_message(random.choice(colors))
 
 # 💬 各コマンドの処理
 async def hello_command(ctx):
