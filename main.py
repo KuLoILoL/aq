@@ -14,18 +14,18 @@ async def on_ready():
 
 class NightView(discord.ui.View):
     @discord.ui.button(label="おやすみくじ", style=discord.ButtonStyle.success)
- async def lucky_color(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def lucky_color(self, interaction: discord.Interaction, button: discord.ui.Button):
         colors = [
-        "明日は何もいいことありません",
-        "明日はいいことあります",
-        "明日のラッキーカラーは赤です",
-        "明日のラッキーカラーは青です。",
-        "明日のラッキーナンバーは5です。",
-        "明日は中吉です。",
-        "明日は大吉です。",
-        "明日は大凶です。"
-    ]
-        await interaction.response.send_message(f"{random.choice(colors)}", ephemeral=True)
+            "明日は何もいいことありません",
+            "明日はいいことあります",
+            "明日のラッキーカラーは赤です",
+            "明日のラッキーカラーは青です。",
+            "明日のラッキーナンバーは5です。",
+            "明日は中吉です。",
+            "明日は大吉です。",
+            "明日は大凶です。"
+        ]
+        await interaction.response.send_message(random.choice(colors), ephemeral=True)
 
 async def hello_command(ctx):
     await ctx.send("ハロー")
@@ -35,13 +35,13 @@ async def button_command(ctx):
     await ctx.send("おはようございます！", view=view)
 
 async def oyasumi_command(ctx):
+    view = NightView()
     await ctx.send("おやすみなさい。ぐ～", view=view)
 
 
 command_map = {
     "hello": hello_command,
     "おはよう": button_command,
-    "おやすみくじ": oyasumikuji_command,
     "おやすみ":oyasumi_command
 }
 
