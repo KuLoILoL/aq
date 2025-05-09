@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import os
-import random  # 🔧 これを追加！
+import random
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -12,6 +12,13 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 async def on_ready():
     print(f'✅ Bot is ready: {bot.user}')
 
+# 🌞 朝用ビュー（挨拶ボタン）
+class MyButtonView(discord.ui.View):
+    @discord.ui.button(label="挨拶", style=discord.ButtonStyle.primary)
+    async def button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🌞 おはようございます！", ephemeral=True)
+
+# 🌙 夜用ビュー（おやすみくじボタン）
 class NightView(discord.ui.View):
     @discord.ui.button(label="おやすみくじ", style=discord.ButtonStyle.success)
     async def lucky_color(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -27,6 +34,7 @@ class NightView(discord.ui.View):
         ]
         await interaction.response.send_message(random.choice(colors), ephemeral=True)
 
+# 💬 各コマンドの処理
 async def hello_command(ctx):
     await ctx.send("ハロー")
 
@@ -38,16 +46,17 @@ async def oyasumi_command(ctx):
     view = NightView()
     await ctx.send("おやすみなさい。ぐ～", view=view)
 
-
+# ✅ コマンド登録
 command_map = {
     "hello": hello_command,
     "おはよう": button_command,
-    "おやすみ":oyasumi_command
+    "おやすみ": oyasumi_command
 }
 
 for name, handler in command_map.items():
     bot.command(name=name)(handler)
 
+# 🤖 自動応答
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -63,4 +72,5 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
+# 🔁 実行
 bot.run(os.environ['DISCORD_TOKEN'])
