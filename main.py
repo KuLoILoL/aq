@@ -24,9 +24,29 @@ async def button_command(ctx):
     view = MyButtonView()
     await ctx.send("おはようございます！", view=view)
 
+async def oyasumikuji_command(ctx):
+    messages = [
+        "明日は何もいいことありません",
+        "明日はいいことあります",
+        "明日のラッキーカラーは赤です",
+        "明日のラッキーカラーは青です。",
+        "明日のラッキーナンバーは5です。",
+        "明日は中吉です。",
+        "明日は大吉です。",
+        "明日は大凶です。"
+    ]
+    await ctx.send(random.choice(messages))
+
+async def oyasumi_command(ctx):
+    view = MyButtonView()
+    await ctx.send("おやすみなさい。ぐ～", view=view)
+
+
 command_map = {
     "hello": hello_command,
-    "おはよう": button_command
+    "おはよう": button_command,
+    "おやすみくじ": oyasumikuji_command,
+    "おやすみ":oyasumi_command
 }
 
 for name, handler in command_map.items():
