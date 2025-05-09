@@ -2,15 +2,36 @@ import discord
 from discord.ext import commands
 import os
 import random
+import json
 
-intents = discord.Intents.default()
-intents.message_content = True
+
 
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 @bot.event
 async def on_ready():
     print(f'✅ Bot is ready: {bot.user}')
+
+
+# 永続化ファイルの場所を Northflank に合わせる
+VALUE_PATH = "/app/data/bot_value.json"
+
+# 読み込み
+if os.path.exists(VALUE_PATH):
+    with open(VALUE_PATH, "r") as f:
+        bot_data = json.load(f)
+else:
+    bot_data = {"value": 10000}
+
+# 保存する関数（使い回しできる）
+def save_data():
+    with open(VALUE_PATH, "w") as f:
+        json.dump(bot_data, f)
+
+
+intents = discord.Intents.default()
+intents.message_content = True
+
 
 # 🌞 朝用ビュー（挨拶ボタン）
 class MyButtonView(discord.ui.View):
@@ -85,6 +106,13 @@ async def on_message(message):
         await message.channel.send(response)
 
     await bot.process_commands(message)
+
+@bot.command()
+async def ざつよう(ctx):
+    bot_data["value"] -= 1
+    save_data()
+    await ctx.send(f"サンキュ！あと{bot_data['value']}本残ってるぞ！")
+
 
 # 🔁 実行
 bot.run(os.environ['DISCORD_TOKEN'])
