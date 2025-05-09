@@ -114,6 +114,46 @@ async def ざつよう(ctx):
     save_data()
     await ctx.send(f"サンキュ！あと{bot_data['value']}本残ってるぞ！")
 
+# プレイヤーステータス保存ファイル
+PLAYER_PATH = "/app/data/players.json"
+
+# 初期データ読み込み
+if os.path.exists(PLAYER_PATH):
+    with open(PLAYER_PATH, "r") as f:
+        players = json.load(f)
+else:
+    players = {}
+
+# ステータス保存
+def save_players():
+    with open(PLAYER_PATH, "w") as f:
+        json.dump(players, f)
+
+# 戦闘ビュー
+class BattleView(discord.ui.View):
+    def __init__(self, user_id):
+        super().__init__(timeout=None)
+        self.user_id = str(user_id)
+
+    @discord.ui.button(label="こうげき", style=discord.ButtonStyle.danger)
+    async def attack(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = str(interaction.user.id)
+
+        if user_id != self.user_id:
+            await interaction.response.send_message("自分の戦闘じゃないよ！", ephemeral=True)
+            return
+
+        player = players.get(user_id)
+        if not player:
+            await interaction.response.send_message("戦闘データが見つかりません", ephemeral=True)
+            return
+
+        # 戦闘処理
+        dmg_to_enemy = random.randint(5, 15)
+        dmg_to_player = random.randint(3, 10)
+
+        player["enemy_hp"]
+
 
 # 🔁 実行
 bot.run(os.environ['DISCORD_TOKEN'])
