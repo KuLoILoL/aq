@@ -218,4 +218,4 @@ async def battle(ctx, monster_name):
     await ctx.send(file=file, embed=embed, view=BattleView(ctx, player, monster_name, monster))
 
 # 実行
-bot.run(os
+bot.run(os.environ['DISCORD_TOKEN'])
