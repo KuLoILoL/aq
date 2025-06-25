@@ -103,9 +103,9 @@ for name, handler in command_map.items():
 
 @bot.event
 async def on_message(message):
+    # ほかのボットの返信は無視する
     if message.author.bot:
-        pass
-    return
+        return
 
     if "大丈夫？" in message.content:
         rand = random.random()
