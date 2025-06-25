@@ -5,6 +5,8 @@ import os
 import random
 import json
 
+# sample text HelloWorlds
+
 intents = discord.Intents.default()
 intents.message_content = True
 
