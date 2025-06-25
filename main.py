@@ -113,7 +113,7 @@ async def on_message(message):
             response = "俺なら大丈夫だぜ"
         else:
             response = "大丈夫なわけねえだろ"
-    await message.channel.send(response)
+        await message.channel.send(response)
 
     await bot.process_commands(message)
 
