@@ -177,6 +177,61 @@ async def dungeon(ctx):
 
 # ----------------------------------------------------------------------------------------------------------------------------
 
+user_states = {}
+
+# ランダムイベントの定義
+EVENTS = [
+    {"type": "enemy", "desc": "敵が現れた！HPが10減った。", "hp_change": -10},
+    {"type": "treasure", "desc": "宝箱を見つけた！HPが10回復した。", "hp_change": +10},
+    {"type": "trap", "desc": "罠にかかった！HPが5減った。", "hp_change": -5},
+    {"type": "nothing", "desc": "何も起こらなかった…。", "hp_change": 0}
+]
+
+# View（進むボタン）
+class DungeonEventView(discord.ui.View):
+    def __init__(self, user_id):
+        super().__init__(timeout=None)
+        self.user_id = user_id
+
+    @discord.ui.button(label="➡ 進む", style=discord.ButtonStyle.primary)
+    async def proceed(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("これはあなたのゲームではありません。", ephemeral=True)
+            return
+
+        state = user_states[self.user_id]
+        state["stage"] += 1
+        event = random.choice(EVENTS)
+        state["hp"] += event["hp_change"]
+
+        embed = discord.Embed(
+            title=f"ステージ {state['stage']}",
+            description=event["desc"],
+            color=discord.Color.red() if event["hp_change"] < 0 else discord.Color.green()
+        )
+        embed.add_field(name="HP", value=str(state["hp"]))
+
+        if state["hp"] <= 0:
+            embed.title = "ゲームオーバー！"
+            embed.description = f"{event['desc']}\nHPがなくなりました…"
+            await interaction.response.edit_message(embed=embed, view=None)
+        else:
+            await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
+
+# ゲーム開始コマンド
+@bot.command()
+async def アビス(ctx):
+    user_states[ctx.author.id] = {"hp": 100, "stage": 0}
+    embed = discord.Embed(
+        title="憧れは止められねえんだ🐰",
+        description="進むボタンでアビスを進もう。",
+        color=discord.Color.blue()
+    )
+    embed.add_field(name="HP", value="100")
+    await ctx.send(embed=embed, view=DungeonEventView(ctx.author.id))
+
+#　－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+
 # 🔁 実行
 
 bot.run(os.environ['DISCORD_TOKEN'])
