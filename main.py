@@ -132,8 +132,50 @@ async def ざつよう(ctx):
 PLAYER_DATA_FILE = 'player_data.json'
 
 # －－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+# ダンジョンの部屋画像（仮のURL）
+ROOM_IMAGES = {
+    "start": "https://i.imgur.com/Gx4WaWK.png",
+    "north": "https://i.imgur.com/8Km9tLL.jpg",
+    "east": "https://i.imgur.com/O3ZC3GM.jpg",
+    "west": "https://i.imgur.com/4M34hi2.png"
+}
 
+# ボタン付きビュー
+class DungeonView(discord.ui.View):
+    def __init__(self, location="start"):
+        super().__init__()
+        self.location = location
 
+    @discord.ui.button(label="北へ進む", style=discord.ButtonStyle.primary)
+    async def go_north(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(embed=create_dungeon_embed("north"), view=DungeonView("north"))
+
+    @discord.ui.button(label="東へ進む", style=discord.ButtonStyle.success)
+    async def go_east(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(embed=create_dungeon_embed("east"), view=DungeonView("east"))
+
+    @discord.ui.button(label="西へ進む", style=discord.ButtonStyle.danger)
+    async def go_west(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(embed=create_dungeon_embed("west"), view=DungeonView("west"))
+
+# Embed生成関数
+def create_dungeon_embed(location):
+    embed = discord.Embed(
+        title=f"{location.title()} の部屋",
+        description=f"{location} の方角に進みました。",
+        color=discord.Color.dark_gold()
+    )
+    embed.set_image(url=ROOM_IMAGES.get(location, ROOM_IMAGES["start"]))
+    return embed
+
+# コマンド実行で開始
+@bot.command()
+async def dungeon(ctx):
+    embed = create_dungeon_embed("start")
+    view = DungeonView()
+    await ctx.send(embed=embed, view=view)
+
+# ----------------------------------------------------------------------------------------------------------------------------
 
 # 🔁 実行
 
