@@ -90,7 +90,7 @@ async def oyasumi_command(ctx):
 
 async def ishiba_command(ctx):
     embed = discord.Embed(title="💥🔫")
-    embed.set_image(url="https://i.imgur.com/Gx4WaWK.png")
+    embed.set_image(url="https://images-ext-1.discordapp.net/external/xxHwpmL3IVQc_lho1AAo3nSLAtBULhzeJjXzqNQnP-Q/https/i.imgur.com/Gx4WaWK.png?format=webp&quality=lossless&width=381&height=375")
     await ctx.send(embed=embed)
 
 # ✅ コマンド登録
