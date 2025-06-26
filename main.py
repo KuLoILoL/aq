@@ -88,12 +88,18 @@ async def oyasumi_command(ctx):
     view = NightView()
     await ctx.send("おやすみなさい。ぐ～", view=view)
 
+async def ishiba_command(ctx):
+    embed = discord.Embed(title="💥🔫")
+    embed.set_image(url="https://i.imgur.com/Gx4WaWK.png")
+    await ctx.send(embed=embed)
+
 # ✅ コマンド登録
 
 command_map = {
 "hello": hello_command,
 "おはよう": button_command,
-"おやすみ": oyasumi_command
+"おやすみ": oyasumi_command,
+"石破茂暗殺": ishiba_command
 }
 
 for name, handler in command_map.items():
