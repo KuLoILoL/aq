@@ -176,15 +176,34 @@ async def dungeon(ctx):
     await ctx.send(embed=embed, view=view)
 
 # ----------------------------------------------------------------------------------------------------------------------------
-
 user_states = {}
 
-# ランダムイベントの定義
+# イベントの定義（画像付き）
 EVENTS = [
-    {"type": "enemy", "desc": "敵が現れた！HPが10減った。", "hp_change": -10},
-    {"type": "treasure", "desc": "宝箱を見つけた！HPが10回復した。", "hp_change": +10},
-    {"type": "trap", "desc": "罠にかかった！HPが5減った。", "hp_change": -5},
-    {"type": "nothing", "desc": "何も起こらなかった…。", "hp_change": 0}
+    {
+        "type": "enemy",
+        "desc": "敵が現れた！HPが10減った。",
+        "hp_change": -10,
+        "image": "https://i.imgur.com/JS6k5tJ.png"  # 敵画像
+    },
+    {
+        "type": "treasure",
+        "desc": "宝箱を見つけた！HPが10回復した。",
+        "hp_change": +10,
+        "image": "https://i.imgur.com/8Km9tLL.jpg"  # 宝箱画像
+    },
+    {
+        "type": "trap",
+        "desc": "罠にかかった！HPが5減った。",
+        "hp_change": -5,
+        "image": "https://i.imgur.com/O3ZC3GM.jpg"  # 罠画像
+    },
+    {
+        "type": "nothing",
+        "desc": "何も起こらなかった…。",
+        "hp_change": 0,
+        "image": "https://i.imgur.com/4M34hi2.png"  # 空部屋画像
+    }
 ]
 
 # View（進むボタン）
@@ -209,27 +228,28 @@ class DungeonEventView(discord.ui.View):
             description=event["desc"],
             color=discord.Color.red() if event["hp_change"] < 0 else discord.Color.green()
         )
+        embed.set_image(url=event["image"])
         embed.add_field(name="HP", value=str(state["hp"]))
 
         if state["hp"] <= 0:
-            embed.title = "ゲームオーバー！"
-            embed.description = f"{event['desc']}\nHPがなくなりました…"
+            embed.title = "💀 ゲームオーバー！"
+            embed.description += "\nHPがなくなりました…"
             await interaction.response.edit_message(embed=embed, view=None)
         else:
             await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
 
-# ゲーム開始コマンド
+# コマンドでゲーム開始
 @bot.command()
-async def アビス(ctx):
+async def start(ctx):
     user_states[ctx.author.id] = {"hp": 100, "stage": 0}
     embed = discord.Embed(
-        title="憧れは止められねえんだ🐰",
-        description="進むボタンでアビスを進もう。",
+        title="⚔️ ダンジョンに突入！",
+        description="進むボタンでダンジョンを進もう。",
         color=discord.Color.blue()
     )
+    embed.set_image(url="https://media.discordapp.net/attachments/846657450115727403/1388050166912778280/1751006740721.png?ex=685f91f4&is=685e4074&hm=eb25e582d5d9b64d7c4ac11918dde4c66bc4b1f65eaeb8900e50e3c205c35bd4&=&format=webp&quality=lossless&width=1054&height=1059")  # 初期部屋画像
     embed.add_field(name="HP", value="100")
     await ctx.send(embed=embed, view=DungeonEventView(ctx.author.id))
-
 #　－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
 
 # 🔁 実行
