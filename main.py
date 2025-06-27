@@ -296,7 +296,7 @@ class TreasureChoiceView(discord.ui.View):
 
 # ゲーム開始コマンド
 @bot.command()
-async def start(ctx):
+async def アビス(ctx):
     user_states[ctx.author.id] = {"hp": 100, "stage": 0}
     embed = discord.Embed(
         title="憧れは止められねえんだ🐰",
