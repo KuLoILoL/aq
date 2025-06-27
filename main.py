@@ -307,6 +307,24 @@ async def アビス(ctx):
     embed.add_field(name="HP", value="100")
     await ctx.send(embed=embed, view=DungeonEventView(ctx.author.id))
 
+# ランキングコマンド
+@bot.command()
+async def きろく(ctx):
+    if not user_states:
+        await ctx.send("まだ前人未踏です。")
+        return
+
+    sorted_users = sorted(user_states.items(), key=lambda x: x[1]["max_stage"], reverse=True)
+    description = ""
+    for i, (user_id, state) in enumerate(sorted_users[:5], start=1):
+        description += f"{i}. **{state['name']}** - アビス第{state['max_stage']}層\n"
+
+    embed = discord.Embed(
+        title="🏆 アビスランキング（トップ5）",
+        description=description,
+        color=discord.Color.purple()
+    )
+    await ctx.send(embed=embed)
 
 #　－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
 
