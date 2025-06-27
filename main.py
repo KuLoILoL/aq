@@ -176,13 +176,6 @@ async def dungeon(ctx):
     await ctx.send(embed=embed, view=view)
 
 # ----------------------------------------------------------------------------------------------------------------------------
-import discord
-from discord.ext import commands
-import random
-
-intents = discord.Intents.default()
-bot = commands.Bot(command_prefix="!", intents=intents)
-
 user_states = {}
 
 # 宝箱の中身候補（名前, HP変化, 説明）
@@ -314,7 +307,6 @@ async def start(ctx):
     embed.add_field(name="HP", value="100")
     await ctx.send(embed=embed, view=DungeonEventView(ctx.author.id))
 
-bot.run("YOUR_BOT_TOKEN")
 
 #　－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
 
