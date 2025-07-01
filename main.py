@@ -111,7 +111,7 @@ async def ishiba_command(ctx):
 
 async def takuti_command(ctx):
     embed = discord.Embed(title="💥🔫")
-    embed.set_image(url="https://media1.tenor.com/m/XCMOnuHZU0sAAAAd/%E3%81%9F%E3%81%8F%E3%81%A3%E3%81%A1-%E3%81%9F%E3%81%8F%E3%81%A3%E3%81%9D.gif")
+    embed.set_image(url="https://c.tenor.com/XCMOnuHZU0sAAAAd/tenor.gif")
     await ctx.send(embed=embed)
 # ✅ コマンド登録
 
