@@ -14,7 +14,9 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 
 @bot.event
 async def on_ready():
+    load_user_states()
     print(f'✅ Bot is ready: {bot.user}')
+
 
 # 永続化ファイルの場所を Northflank に合わせる
 
@@ -36,6 +38,20 @@ def save_data():
 
 intents = discord.Intents.default()
 intents.message_content = True
+
+# user_states管理（追加分）
+USER_PATH = "user_states.json"
+user_states = {}
+
+def save_user_states():
+    with open(USER_PATH, "w", encoding="utf-8") as f:
+        json.dump(user_states, f, ensure_ascii=False, indent=2)
+
+def load_user_states():
+    global user_states
+    if os.path.exists(USER_PATH):
+        with open(USER_PATH, "r", encoding="utf-8") as f:
+            user_states.update(json.load(f))
 
 # 🌞 朝用ビュー（挨拶ボタン）
 
@@ -176,79 +192,98 @@ async def dungeon(ctx):
     await ctx.send(embed=embed, view=view)
 
 # ----------------------------------------------------------------------------------------------------------------------------
-user_states = {}
-
-# 宝箱の中身候補（名前, HP変化, 説明）
-TREASURES = [
-    {"name": "回復ポーション", "hp_change": +20, "desc": "HPが20回復した！"},
-    {"name": "毒リンゴ", "hp_change": -15, "desc": "毒だった！HPが15減った..."},
-    {"name": "魔法の盾", "hp_change": +10, "desc": "魔法の加護でHPが10回復した！"},
-    {"name": "空っぽの箱", "hp_change": 0, "desc": "中身はなかった…。"}
-]
-
+# --- イベント・宝箱定義（簡略化） ---
 EVENTS = [
-    {
-        "type": "enemy",
-        "desc": "敵が現れた！HPが10減った。",
-        "hp_change": -10,
-        "image": "https://i.imgur.com/JS6k5tJ.png"
-    },
-    {
-        "type": "treasure",
-        "desc": "宝箱を見つけた！開けますか？",
-        "hp_change": 0,  # 選択式なのでここでは影響なし
-        "image": "https://i.imgur.com/8Km9tLL.jpg"
-    },
-    {
-        "type": "trap",
-        "desc": "罠にかかった！HPが5減った。",
-        "hp_change": -5,
-        "image": "https://i.imgur.com/O3ZC3GM.jpg"
-    },
-    {
-        "type": "nothing",
-        "desc": "何も起こらなかった…。",
-        "hp_change": 0,
-        "image": "https://i.imgur.com/4M34hi2.png"
-    }
+    {"type": "monster", "desc": "モンスターに遭遇した！HP -10", "hp_change": -10, "image": "https://i.imgur.com/yX1ZC2B.png"},
+    {"type": "treasure", "desc": "宝箱を見つけた！", "image": "https://i.imgur.com/Nz0x65L.png"},
 ]
 
-# View（進むボタン）
-class DungeonEventView(discord.ui.View):
-    def __init__(self, user_id):
+TREASURES = [
+    {"name": "回復ポーション", "desc": "回復ポーションを手に入れた！", "item": "回復ポーション"},
+    {"name": "謎の巻物", "desc": "よく分からない巻物だ…", "item": "謎の巻物"},
+]
+
+# --- 2. ユーザーステータスに items を追加 ---
+@bot.command()
+async def アビス(ctx):
+    user_id = ctx.author.id
+    user_states[user_id] = {
+        "name": ctx.author.display_name,
+        "hp": 100,
+        "stage": 0,
+        "max_stage": 0,
+        "items": []
+    }
+    save_user_states()
+
+    embed = discord.Embed(title="憧れは止められねえんだ🐰", description="進むボタンでアビスを進もう。", color=discord.Color.blue())
+    embed.set_image(url="https://media.discordapp.net/attachments/846657450115727403/1388050166912778280/1751006740721.png")
+    embed.add_field(name="HP", value="100")
+    await ctx.send(embed=embed, view=DungeonEventView(user_id))
+
+# --- ボス戦ビュー ---
+class BossBattleView(discord.ui.View):
+    def __init__(self, user_id, boss_hp=50):
         super().__init__(timeout=None)
         self.user_id = user_id
+        self.boss_hp = boss_hp
 
-    @discord.ui.button(label="➡ 進む", style=discord.ButtonStyle.primary)
-    async def proceed(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="⚔ 戦う", style=discord.ButtonStyle.danger)
+    async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id:
-            await interaction.response.send_message("これはあなたのゲームではありません。", ephemeral=True)
+            await interaction.response.send_message("あなたの戦闘ではありません。", ephemeral=True)
             return
 
         state = user_states[self.user_id]
-        state["stage"] += 1
-        event = random.choice(EVENTS)
-        embed = discord.Embed(
-            title=f"ステージ {state['stage']}",
-            description=event["desc"],
-            color=discord.Color.gold()
-        )
-        embed.set_image(url=event["image"])
+        damage = random.randint(5, 15)
+        self.boss_hp -= damage
+        boss_attack = random.randint(5, 10)
+        state["hp"] -= boss_attack
 
-        if event["type"] == "treasure":
-            await interaction.response.edit_message(embed=embed, view=TreasureChoiceView(self.user_id))
+        embed = discord.Embed(title="🧠 ボスバトル！", color=discord.Color.dark_red())
+        embed.add_field(name="あなたのHP", value=str(state["hp"]))
+        embed.add_field(name="ボスのHP", value=str(max(0, self.boss_hp)))
+        embed.description = f"あなたはボスに {damage} ダメージを与えた！\nボスから {boss_attack} ダメージを受けた！"
+
+        if state["hp"] <= 0:
+            embed.title = "💀 ゲームオーバー！"
+            await interaction.response.edit_message(embed=embed, view=None)
+            save_user_states()
+            return
+        elif self.boss_hp <= 0:
+            embed.title = "🎉 ボスを倒した！"
+            await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
+            save_user_states()
+            return
+
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="🧪 アイテムを使う", style=discord.ButtonStyle.success)
+    async def use_item(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("あなたの戦闘ではありません。", ephemeral=True)
+            return
+
+        state = user_states[self.user_id]
+        if not state.get("items"):
+            await interaction.response.send_message("アイテムを持っていません！", ephemeral=True)
+            return
+
+        item = state["items"].pop(0)
+
+        if item == "回復ポーション":
+            state["hp"] += 20
+            effect_desc = "HPが20回復！"
         else:
-            state["hp"] += event["hp_change"]
-            embed.add_field(name="HP", value=str(state["hp"]))
+            effect_desc = f"{item} を使った！"
 
-            if state["hp"] <= 0:
-                embed.title = "💀 ゲームオーバー！"
-                embed.description += "\nお前死んだ"
-                await interaction.response.edit_message(embed=embed, view=None)
-            else:
-                await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
+        embed = discord.Embed(title="🧪 アイテム使用", description=effect_desc, color=discord.Color.green())
+        embed.add_field(name="あなたのHP", value=str(state["hp"]))
+        embed.add_field(name="ボスのHP", value=str(max(0, self.boss_hp)))
+        await interaction.response.edit_message(embed=embed, view=self)
+        save_user_states()
 
-# 宝箱イベントの選択ビュー
+# --- 宝箱イベントビュー ---
 class TreasureChoiceView(discord.ui.View):
     def __init__(self, user_id):
         super().__init__(timeout=None)
@@ -262,69 +297,64 @@ class TreasureChoiceView(discord.ui.View):
             return
 
         state = user_states[self.user_id]
-        state["hp"] += self.treasure["hp_change"]
+
+        if "item" in self.treasure:
+            state["items"].append(self.treasure["item"])
+
+        save_user_states()
 
         embed = discord.Embed(
             title=f"{self.treasure['name']} を見つけた！",
-            description=self.treasure["desc"],
-            color=discord.Color.green() if self.treasure["hp_change"] >= 0 else discord.Color.red()
+            description=self.treasure.get("desc", "アイテムを手に入れた！ ボス戦で使えるよ。"),
+            color=discord.Color.green()
         )
         embed.set_image(url="https://i.imgur.com/8Km9tLL.jpg")
         embed.add_field(name="HP", value=str(state["hp"]))
+        embed.add_field(name="所持アイテム", value=", ".join(state["items"]) if state["items"] else "なし")
 
-        if state["hp"] <= 0:
-            embed.title = "💀 ゲームオーバー！"
-            embed.description += "\nお前死んだ"
-            await interaction.response.edit_message(embed=embed, view=None)
-        else:
-            await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
-
-    @discord.ui.button(label="やめておく", style=discord.ButtonStyle.secondary)
-    async def skip_box(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message("あなたのイベントではありません。", ephemeral=True)
-            return
-
-        embed = discord.Embed(
-            title="宝箱を無視した",
-            description="安全策を選んだ。先へ進もう。",
-            color=discord.Color.greyple()
-        )
-        embed.set_image(url="https://i.imgur.com/4M34hi2.png")
-        embed.add_field(name="HP", value=str(user_states[self.user_id]["hp"]))
         await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
 
-# ゲーム開始コマンド
-@bot.command()
-async def アビス(ctx):
-    user_states[ctx.author.id] = {"hp": 100, "stage": 0}
-    embed = discord.Embed(
-        title="憧れは止められねえんだ🐰",
-        description="進むボタンでアビスを進もう。",
-        color=discord.Color.blue()
-    )
-    embed.set_image(url="https://media.discordapp.net/attachments/846657450115727403/1388050166912778280/1751006740721.png?ex=685f91f4&is=685e4074&hm=eb25e582d5d9b64d7c4ac11918dde4c66bc4b1f65eaeb8900e50e3c205c35bd4&=&format=webp&quality=lossless&width=1054&height=1059")
-    embed.add_field(name="HP", value="100")
-    await ctx.send(embed=embed, view=DungeonEventView(ctx.author.id))
+# --- ダンジョン探索ビュー ---
+class DungeonEventView(discord.ui.View):
+    def __init__(self, user_id):
+        super().__init__(timeout=None)
+        self.user_id = user_id
 
-# ランキングコマンド
-@bot.command()
-async def きろく(ctx):
-    if not user_states:
-        await ctx.send("まだ前人未踏です。")
-        return
+    @discord.ui.button(label="➡ 進む", style=discord.ButtonStyle.primary)
+    async def proceed(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("これはあなたのゲームではありません。", ephemeral=True)
+            return
 
-    sorted_users = sorted(user_states.items(), key=lambda x: x[1]["max_stage"], reverse=True)
-    description = ""
-    for i, (user_id, state) in enumerate(sorted_users[:5], start=1):
-        description += f"{i}. **{state['name']}** - アビス第{state['max_stage']}層\n"
+        state = user_states[self.user_id]
+        state["stage"] += 1
+        state["max_stage"] = max(state["max_stage"], state["stage"])
+        save_user_states()
 
-    embed = discord.Embed(
-        title="🏆 アビスランキング（トップ5）",
-        description=description,
-        color=discord.Color.purple()
-    )
-    await ctx.send(embed=embed)
+        if state["stage"] % 10 == 0:
+            embed = discord.Embed(title="👹 ボス出現！", description="強大なボスが前に立ちはだかる！", color=discord.Color.red())
+            embed.set_image(url="https://i.imgur.com/6YQO6mT.jpg")
+            await interaction.response.edit_message(embed=embed, view=BossBattleView(self.user_id))
+            return
+
+        event = random.choice(EVENTS)
+        embed = discord.Embed(title=f"ステージ {state['stage']}", description=event["desc"], color=discord.Color.gold())
+        embed.set_image(url=event["image"])
+
+        if event["type"] == "treasure":
+            await interaction.response.edit_message(embed=embed, view=TreasureChoiceView(self.user_id))
+        else:
+            state["hp"] += event["hp_change"]
+            embed.add_field(name="HP", value=str(state["hp"]))
+
+            if state["hp"] <= 0:
+                embed.title = "💀 ゲームオーバー！"
+                embed.description += "\nHPがなくなりました…"
+                save_user_states()
+                await interaction.response.edit_message(embed=embed, view=None)
+            else:
+                await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
+
 
 #　－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
 
