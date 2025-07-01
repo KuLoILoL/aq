@@ -109,13 +109,18 @@ async def ishiba_command(ctx):
     embed.set_image(url="https://images-ext-1.discordapp.net/external/xxHwpmL3IVQc_lho1AAo3nSLAtBULhzeJjXzqNQnP-Q/https/i.imgur.com/Gx4WaWK.png?format=webp&quality=lossless&width=381&height=375")
     await ctx.send(embed=embed)
 
+async def takuti_command(ctx):
+    embed = discord.Embed(title="💥🔫")
+    embed.set_image(url="https://media1.tenor.com/m/XCMOnuHZU0sAAAAd/%E3%81%9F%E3%81%8F%E3%81%A3%E3%81%A1-%E3%81%9F%E3%81%8F%E3%81%A3%E3%81%9D.gif")
+    await ctx.send(embed=embed)
 # ✅ コマンド登録
 
 command_map = {
 "hello": hello_command,
 "おはよう": button_command,
 "おやすみ": oyasumi_command,
-"石破茂暗殺": ishiba_command
+"石破茂暗殺": ishiba_command,
+"たくっち死亡": takuti_command
 }
 
 for name, handler in command_map.items():
