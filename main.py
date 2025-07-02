@@ -282,6 +282,42 @@ class TreasureChoiceView(discord.ui.View):
         embed.add_field(name="所持アイテム", value=", ".join(state["items"]) if state["items"] else "なし")
 
         await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
+# --- ボス戦ビュー ---
+class BossBattleView(discord.ui.View):
+    def __init__(self, user_id, boss_hp=50):
+        super().__init__(timeout=None)
+        self.user_id = user_id
+        self.boss_hp = boss_hp
+
+    @discord.ui.button(label="⚔ 戦う", style=discord.ButtonStyle.danger)
+    async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("あなたの戦闘ではありません。", ephemeral=True)
+            return
+
+        state = user_states[self.user_id]
+        damage = random.randint(5, 15)
+        self.boss_hp -= damage
+        boss_attack = random.randint(5, 10)
+        state["hp"] -= boss_attack
+
+        embed = discord.Embed(title="🧠 ボスバトル！", color=discord.Color.dark_red())
+        embed.add_field(name="あなたのHP", value=str(state["hp"]))
+        embed.add_field(name="ボスのHP", value=str(max(0, self.boss_hp)))
+        embed.description = f"あなたはボスに {damage} ダメージを与えた！\nボスから {boss_attack} ダメージを受けた！"
+
+        if state["hp"] <= 0:
+            embed.title = "💀 ゲームオーバー！"
+            await interaction.response.edit_message(embed=embed, view=None)
+            save_user_states()
+            return
+        elif self.boss_hp <= 0:
+            embed.title = "🎉 ボスを倒した！"
+            await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
+            save_user_states()
+            return
+
+        await interaction.response.edit_message(embed=embed, view=self)
 
 # --- ダンジョン探索ビュー ---
 class DungeonEventView(discord.ui.View):
