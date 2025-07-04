@@ -197,13 +197,6 @@ async def dungeon(ctx):
     await ctx.send(embed=embed, view=view)
 
 # ----------------------------------------------------------------------------------------------------------------------------
-import discord
-from discord.ext import commands
-import random
-import json
-import os
-
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 # --- データ保存パスと初期化 ---
 DATA_PATH = "user_data.json"
