@@ -288,30 +288,38 @@ class BossBattleView(discord.ui.View):
             await interaction.response.send_message("あなたの戦闘ではありません。", ephemeral=True)
             return
 
-        state = user_states[self.user_id]
-        damage = random.randint(5, 15)
-        self.boss_hp -= damage
+        user_id_str = str(self.user_id)
+        state = user_states.get(user_id_str)
+
+        if not state:
+            await interaction.response.send_message("ゲームデータが見つかりません。再度ゲームを開始してください。", ephemeral=True)
+            return
+
+        # プレイヤーとボスのダメージ処理
+        player_damage = random.randint(5, 15)
         boss_attack = random.randint(5, 10)
+
+        self.boss_hp -= player_damage
         state["hp"] -= boss_attack
+        player_hp = max(0, state["hp"])
 
         embed = discord.Embed(title="🧠 ボスバトル！", color=discord.Color.dark_red())
-        embed.add_field(name="あなたのHP", value=str(state["hp"]))
+        embed.description = f"あなたはボスに **{player_damage}** ダメージを与えた！\nボスから **{boss_attack}** ダメージを受けた！"
+        embed.add_field(name="あなたのHP", value=str(player_hp))
         embed.add_field(name="ボスのHP", value=str(max(0, self.boss_hp)))
-        embed.description = f"あなたはボスに {damage} ダメージを与えた！\nボスから {boss_attack} ダメージを受けた！"
 
-        if state["hp"] <= 0:
+        # 勝敗判定
+        if player_hp <= 0:
             embed.title = "💀 ゲームオーバー！"
             await interaction.response.edit_message(embed=embed, view=None)
-            save_user_states()
-            return
         elif self.boss_hp <= 0:
             embed.title = "🎉 ボスを倒した！"
+            state["hp"] = max(1, state["hp"])  # 倒した後にHPが負にならないように調整可
             await interaction.response.edit_message(embed=embed, view=DungeonEventView(self.user_id))
-            save_user_states()
-            return
+        else:
+            await interaction.response.edit_message(embed=embed, view=self)
 
-        await interaction.response.edit_message(embed=embed, view=self)
-
+        save_user_states()
 # --- ダンジョン探索ビュー ---
 class DungeonEventView(discord.ui.View):
     def __init__(self, user_id):
