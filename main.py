@@ -111,7 +111,9 @@ async def ishiba_command(ctx):
 
 async def takuti_command(ctx):
     embed = discord.Embed(title="💥🔫")
-    embed.set_image(url="")
+    embed.set_image(url=""
+    
+    )
     await ctx.send(embed=embed)
 # ✅ コマンド登録
 
@@ -421,7 +423,7 @@ async def きろく(ctx):
     sorted_users = sorted(user_states.items(), key=lambda x: x[1]["max_stage"], reverse=True)
     description = ""
     for i, (user_id, state) in enumerate(sorted_users[:5], start=1):
-        description += f"{i}. **{state['name']}** - アビス第{state['max_stage']}層\n"
+        description += f"{i}. **{state['name']}** - アビス第{state['max_stage'-1]}層\n"
 
     embed = discord.Embed(
         title="🏆 アビスランキング（トップ5）",
